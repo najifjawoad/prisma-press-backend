@@ -11,6 +11,9 @@ const loginUserIntoDB = async (payload: ILoginUser) => {
   const user = await prisma.user.findUniqueOrThrow({
     where: { email },
   });
+  if (user.activeStatus === "BLOCKED") {
+    throw new Error("Your account has been blocked");
+  }
 
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
@@ -25,25 +28,33 @@ const loginUserIntoDB = async (payload: ILoginUser) => {
     role: user.role,
   };
 
-//   const accessToken = jwt.sign(
-//     jwtPayload,
-//      config.jwt_access_secret!, 
-//   {
-//     expiresIn: config.jwt_access_expires_in,
-//   } as SignOptions
-// );
+  //   const accessToken = jwt.sign(
+  //     jwtPayload,
+  //      config.jwt_access_secret!,
+  //   {
+  //     expiresIn: config.jwt_access_expires_in,
+  //   } as SignOptions
+  // );
 
-const accessToken = jwtUtils.createToken(jwtPayload , config.jwt_access_secret,config.jwt_access_expires_in as SignOptions )
+  const accessToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_access_secret,
+    config.jwt_access_expires_in as SignOptions,
+  );
 
-//   const refreshToken = jwt.sign(
-//     jwtPayload,
-//      config.jwt_refresh_secret,
-//       {
-//     expiresIn: config.jwt_refresh_expires_in,
-//   } as SignOptions
-// );
+  //   const refreshToken = jwt.sign(
+  //     jwtPayload,
+  //      config.jwt_refresh_secret,
+  //       {
+  //     expiresIn: config.jwt_refresh_expires_in,
+  //   } as SignOptions
+  // );
 
-const refreshToken = jwtUtils.createToken(jwtPayload,config.jwt_refresh_secret , config.jwt_refresh_expires_in as SignOptions )
+  const refreshToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_refresh_secret,
+    config.jwt_refresh_expires_in as SignOptions,
+  );
 
   return { accessToken, refreshToken };
 };

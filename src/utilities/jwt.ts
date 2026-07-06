@@ -19,9 +19,15 @@ const createToken = (payload : JwtPayload, secret : string, expiresIn : SignOpti
 const verifyToken = (token :string , secret : string) =>{
     try {
         const verifiedToken = jwt.verify(token, secret)
-        return verifiedToken;
+        return {
+            success : true,
+            data : verifiedToken
+        }
     } catch (error : any) {
-        throw new Error(error.message);
+       return {
+        success : false,
+        error : error.message,
+       }
     }
 }
 

@@ -6,57 +6,85 @@ import httpStatus from "http-status";
 import { userController } from "./users.controller";
 import { jwtUtils } from "../../utilities/jwt";
 import { Role } from "../../../generated/prisma/enums";
+import { catchAsync } from "../../utilities/catchAsync";
+import { JwtPayload } from "jsonwebtoken";
 
 const router = Router();
 
 declare global {
-    namespace Express {
-        interface Request {
-            user? : {
-                email : string;
-                name : string;
-                id :string;
-                role : Role;
-            }
-        }
+  namespace Express {
+    interface Request {
+      user?: {
+        email: string;
+        name: string;
+        id: string;
+        role: Role;
+      };
     }
+  }
 }
 
 router.post("/register", userController.registerUser);
 
+const auth = (...requiredRoles: Role[]) => {
+  return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const token = req.cookies.accessToken;
+    // ||
+    // req.headers.authorization?.startsWith("Bearer ")
+    //   ? req.headers.authorization?.split(" ")[1]
+    //   : req.headers.authorization;
+
+    if (!token) {
+      throw new Error(
+        "You are not logged in . Please login to access this resource",
+      );
+    }
+
+    const verifiedToken = jwtUtils.verifyToken(token, config.jwt_access_secret);
+
+    if (!verifiedToken.success) {
+      throw new Error(verifiedToken.error);
+    }
+   console.log("Decoded Token:", verifiedToken.data);
+    const { email, name, id, role } = verifiedToken.data as JwtPayload;
+    // console.log("Required Roles:", requiredRoles);
+    // console.log("Token Role:", role);
+    // console.log(typeof role);
+
+    if (requiredRoles.length && !requiredRoles.includes(role)) {
+      throw new Error("Forbidden access");
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id, email, name, role },
+    });
+
+    if (!user) {
+      throw new Error("User not found. Please login again");
+    }
+    if (user.activeStatus === "BLOCKED") {
+      throw new Error("Your account has been blocked");
+    }
+    req.user = {
+      email,
+      name,
+      id,
+      role,
+    };
+    next();
+  });
+};
+
 router.get(
   "/me",
-  (req: Request, res: Response, next: NextFunction) => {
-    const { accessToken } = req.cookies;
+  // (req: Request, res: Response, next: NextFunction) => {
+  //   const { accessToken } = req.cookies;
 
-    const verifiedToken = jwtUtils.verifyToken(
-      accessToken,
-      config.jwt_access_secret,
-    );
+  //   const requiredRoles = [Role.ADMIN, Role.AUTHOR, Role.USER];
 
-    if (typeof verifiedToken === "string") {
-      throw new Error(verifiedToken);
-    }
-
-    const { email, name, id, role } = verifiedToken;
-
-    const requiredRoles = [Role.ADMIN, Role.AUTHOR, Role.USER];
-
-    if (!requiredRoles.includes(role)) {
-      return res.status(403).json({
-        success: false,
-        statusCode: httpStatus.FORBIDDEN,
-        message: "Forbidden Route!!",
-      });
-    }
-     
-
-    req.user = {
-        email , name , id , role
-    }
-
-    next();
-  },
+  //   next();
+  // },
+  auth(Role.ADMIN, Role.AUTHOR, Role.USER),
   userController.getMyProfile,
 );
 
