@@ -34,10 +34,6 @@ const result = await postService.getAllPosts();
      
 })
 
-const getPostsStats = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
-})
-
 const getMyPosts = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
 
     const authorId = req.user?.id as string;
@@ -106,6 +102,20 @@ const deletePost = catchAsync(async (req: Request, res: Response, next: NextFunc
         data : null
     })
     
+})
+
+const getPostsStats = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+   
+
+    const result = await postService.getPostStatus();
+        sendResponse(res , {
+        success : true,
+        statusCode : httpStatus.OK,
+        message : "Post stats retrieved successfully",
+        data : result
+    })
+
+
 })
 
 export const postController = {
