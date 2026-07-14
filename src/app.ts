@@ -1,15 +1,14 @@
 import cookieParser from "cookie-parser";
-import express, { Application, Request, Response } from "express";
+import express, { Application, NextFunction, Request, Response } from "express";
 import config from "./config";
 import cors from "cors";
-
-import { prisma } from "./lib/prisma";
-import bcrypt from "bcryptjs";
 import { userRoutes } from "./modules/users/users.route";
 import { authRoutes } from "./modules/auth/auth.route";
 import { postRoutes } from "./modules/posts/post.router";
 import { commentRoutes } from "./modules/comments/comments.route";
-
+import { notFound } from "./middlewares/notFound";
+import httpStatus from "http-status";
+import { globalErrorHandler } from "./middlewares/globalErrorHandler";
 const app: Application = express();
 
 app.use(
@@ -29,6 +28,13 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api/users" , userRoutes);
 app.use("/api/auth" , authRoutes);
 app.use("/api/posts" , postRoutes);
-app.use("/api/comments", commentRoutes)
+app.use("/api/comments", commentRoutes);
+
+// For unknown routes :
+app.use(notFound);
+
+
+// For global error handling :
+app.use(globalErrorHandler);
 
 export default app;
