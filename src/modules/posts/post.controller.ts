@@ -1,132 +1,127 @@
-import { NextFunction, Request, Response } from "express"
-import { catchAsync } from "../../utilities/catchAsync"
-import { postService } from "./post.service";
-import { sendResponse } from "../../utilities/sendResponse";
+import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 
-const createPost = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+import { postService } from "./post.service";
+import { catchAsync } from "../../utilities/catchAsync";
+import { sendResponse } from "../../utilities/sendResponse";
 
-    const id  = req.user?.id ;
+const createPost = catchAsync(async (req : Request, res : Response, next : NextFunction) => {
+    const id = req.user?.id
+
     const payload = req.body;
 
-    const result = await postService.createPost(payload , id as string);
+    const result = await postService.createPost(payload, id as string);
 
-    sendResponse(res , {
-        
+
+    sendResponse(res, {
         success : true,
         statusCode : httpStatus.CREATED,
-        message : "Post created successfully",
+        message : "Post Created SuccessFully",
         data : result
     })
-
 })
 
-const getAllPosts = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
-
+const getAllPosts = catchAsync(async (req : Request, res : Response, next : NextFunction) => {
     const query = req.query;
+    const result = await postService.getAllPosts(query);
 
-const result = await postService.getAllPosts(query);
-
-    sendResponse(res , {
+    sendResponse(res, {
         success : true,
         statusCode : httpStatus.OK,
-        message : "Posts fetched successfully",
-        data : result
+        message : "Posts Retrieved Successfully",
+        data: result.data,
+        meta: result.meta
     })
-     
 })
 
-const getMyPosts = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
-    const authorId = req.user?.id as string;
-    const result = await postService.getMyPosts(authorId);
-
-    sendResponse(res , {
-        success : true,
-        statusCode : httpStatus.OK,
-        message : "Posts fetched successfully",
-        data : result
-    })
-
-})
-
-const getPostById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
+const getPostById = catchAsync(async (req : Request, res : Response, next : NextFunction) => {
     const postId = req.params.postId;
+
     if(!postId){
-       throw new Error("Post id is required in params");
+        throw new Error("Post Id Required In Params")
     }
+
     const result = await postService.getPostById(postId as string);
 
-    sendResponse(res , {
-        success : true,
-        statusCode : httpStatus.OK, 
-        message : "Post fetched successfully",
-        data : result
-    })
-    
-})
-
-const updatePost = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
-    const authorId = req.user?.id as string;
-    const IsAdmin = req.user?.role === "ADMIN" ? true : false;
-    const postId = req.params.postId;
-    const payload = req.body;
-
-    const result = await postService.updatePost(postId as string, payload, authorId, IsAdmin);
-
-    sendResponse(res , {
+    sendResponse(res, {
         success : true,
         statusCode : httpStatus.OK,
-        message : "Post updated successfully",
+        message : "Post retrieved successfuly",
         data : result
     })
-    
 })
 
-const deletePost = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const updatePost = catchAsync(async (req : Request, res : Response, next : NextFunction) => {
+    const authorId = req.user?.id
+    const isAdmin = req.user?.role === "ADMIN";
 
-    const authorId = req.user?.id as string;
-    const IsAdmin = req.user?.role === "ADMIN" ? true : false;
     const postId = req.params.postId;
 
-    if(!postId){
-        throw new Error("Post id is required in params");
+    if (!postId) {
+        throw new Error("Post Id Required In Params")
     }
 
-     await postService.deletePost(postId as string, authorId, IsAdmin);
+    const payload = req.body;
 
-    sendResponse(res , {
-        success : true,
-        statusCode : httpStatus.OK,
-        message : "Post deleted successfully",
-        data : null
+    const result = await postService.updatePost(postId as string, payload, authorId as string, isAdmin)
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Post updated successfully",
+        data: result
     })
-    
 })
 
-const getPostsStats = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-   
+const deletePost = catchAsync(async (req : Request, res : Response, next : NextFunction) => {
+    const authorId = req.user?.id
+    const isAdmin = req.user?.role === "ADMIN";
 
-    const result = await postService.getPostStatus();
-        sendResponse(res , {
-        success : true,
-        statusCode : httpStatus.OK,
-        message : "Post stats retrieved successfully",
-        data : result
+    const postId = req.params.postId;
+    if (!postId) {
+        throw new Error("Post Id Required In Params")
+    }
+
+    await postService.deletePost(postId as string, authorId as string, isAdmin)
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Post deleted successfully",
+        data: null
     })
+})
 
+const getPostsStats = catchAsync(async (req : Request, res : Response, next : NextFunction) => {
+    const result = await postService.getPostsStats();
 
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Post stats retrieved successfully",
+        data: result
+    })
+})
+
+const getMyPosts = catchAsync(async (req : Request, res : Response, next : NextFunction) => {
+    const authorId = req.user?.id;
+
+    const result = await postService.getMyPosts(authorId as string);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "My Posts retrieved successfuly",
+        data: result
+    })
 })
 
 export const postController = {
     createPost,
     getAllPosts,
-    getPostsStats,
-    getMyPosts,
     getPostById,
     updatePost,
-    deletePost
+    deletePost,
+    getPostsStats,
+    getMyPosts
 }

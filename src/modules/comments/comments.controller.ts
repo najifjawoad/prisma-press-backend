@@ -1,68 +1,55 @@
 import { NextFunction, Request, Response } from "express";
-import { catchAsync } from "../../utilities/catchAsync";
-import { sendResponse } from "../../utilities/sendResponse";
 import httpStatus from "http-status";
+import { catchAsync } from "../../utilities/catchAsync";
 import { commentService } from "./comments.service";
+import { sendResponse } from "../../utilities/sendResponse";
 
-const createComment = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-     
+
+const createComment = catchAsync(async (req : Request, res : Response, next : NextFunction) => {
     const authorId = req.user?.id as string;
+    const result = await commentService.createComment(authorId, req.body);
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "Comment created successfully",
+        data: result
+    })
+})
+
+const getCommentByAuthorId = catchAsync(async (req : Request, res : Response, next : NextFunction) => {
+    const { authorId } = req.params
+    const result = await commentService.getCommentByAuthorId(authorId as string)
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Comments retrieved successfully",
+        data: result
+    })
+})
+
+const getCommentByPostId = catchAsync(async (req : Request, res : Response, next : NextFunction) => {
+    const { postId } = req.params
+    const result = await commentService.getCommentByCommentId(postId as string)
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Comment retrieved successfully",
+        data: result
+    })
+})
+
+const updateComment = catchAsync(async (req : Request, res : Response, next : NextFunction) => {
+    const user = req.user;
+    const { commentId } = req.params;
+    const authorId = user?.id as string;
     const payload = req.body;
-
-    const result = await commentService.createComment(authorId , payload);
-
-    sendResponse(res , {
-        success : true,
-        statusCode : httpStatus.CREATED,
-        message : "Comment created successfully",
-        data : result
+    const result = await commentService.updateComment(commentId as string, payload, authorId)
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Comment updated successfully",
+        data: result
     })
-})
-
-const getCommentsByAuthorId = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const {authorId} = req.params;
-
-    const result  = await commentService.getCommentByAuthorId(authorId as string);
-
-    sendResponse(res , {
-        success : true,
-        statusCode : httpStatus.OK,
-        message : "Comments fetched successfully",
-        data : result
-    })
-     
-})
-
-
-const getCommentsByPostId = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const {postId} = req.params;
-
-    const result  = await commentService.getCommentByPostId(postId as string);
-
-    sendResponse(res , {
-        success : true,
-        statusCode : httpStatus.OK,
-        message : "Comments fetched successfully",
-        data : result
-    })
-     
-})
-
-const updateComment = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-     
-    const {commentId} = req.params;
-    const authorId = req.user?.id as string;
-    const payload = req.body;
-    const result = await commentService.updateComment(commentId as string , payload , authorId) ;
-
-    sendResponse(res , {
-        success : true,
-        statusCode : httpStatus.OK, 
-        message : "Comment updated successfully",
-        data : result
-    })
-
-
 })
 
 const deleteComment = catchAsync(async (req : Request, res : Response, next : NextFunction) => {
@@ -90,11 +77,10 @@ const moderateComment = catchAsync(async (req : Request, res : Response, next : 
     });
 })
 
-
 export const commentController = {
     createComment,
-    getCommentsByAuthorId,
-    getCommentsByPostId,
+    getCommentByAuthorId,
+    getCommentByPostId,
     updateComment,
     deleteComment,
     moderateComment

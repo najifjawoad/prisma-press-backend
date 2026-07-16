@@ -1,100 +1,103 @@
-import { prisma } from "../../lib/prisma";
-import {
-  ICreateCommentPayload,
-  IModerateCommentPayload,
-  IUpdateCommentPayload,
-} from "./comments.interface";
+import { prisma } from "../../lib/prisma"
+import { ICreateCommentPayload, IModerateCommentPayload, IUpdateCommentPayload } from "./comments.interface"
 
-const createComment = async (
-  authorId: string,
-  payload: ICreateCommentPayload,
-) => {
-  await prisma.post.findUniqueOrThrow({
-    where: {
-      id: payload.postId,
-    },
-  });
 
-  const comment = await prisma.comment.create({
-    data: {
-      ...payload,
-      authorId,
-    },
-  });
+const createComment = async (authorId: string, payload: ICreateCommentPayload) => {
+    await prisma.post.findUniqueOrThrow({
+        where: {
+            id: payload.postId
+        }
+    })
 
-  return comment;
-};
-//////////////////////////
-const getCommentByAuthorId = async (authorId: string) => {
-  const comments = await prisma.comment.findMany({
-    where: {
-      authorId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    include: {
-      post: {
-        select: {
-          id: true,
-          title: true,
+    const comment = await prisma.comment.create({
+        data: {
+            ...payload,
+            authorId
         },
-      },
-    },
-  });
+        // include:{
+        //     post : true
+        // }
+    })
 
-  return comments;
-};
+    return comment
+}
 
-const getCommentByPostId = async (postId: string) => {
-  const comment = await prisma.comment.findMany({
-    where: {
-      postId,
-    },
-  });
-  return comment;
-};
+const getCommentByAuthorId = async (authorId: string) => {
+    const comments = await prisma.comment.findMany({
+        where: {
+            authorId
+        },
+        orderBy: { createdAt: "desc" },
+        include: {
+            post: {
+                select: {
+                    id: true,
+                    title: true
+                }
+            }
+        }
+    })
+    return comments
+}
 
-const updateComment = async (
-  commentId: string,
-  data: IUpdateCommentPayload,
-  authorId: string,
-) => {
-  const commentData = await prisma.comment.findUniqueOrThrow({
-    where: {
-      id: commentId,
-    },
-    select: {
-      id: true,
-    },
-  });
+const getCommentByCommentId = async (postId : string) => {
+    const comment = await prisma.comment.findMany({
+        where: {
+            postId
+        }
+    })
+    return comment
+}
 
-  const comment = await prisma.comment.update({
-    where: { id: commentId },
-    data,
-  });
-  return comment;
-};
+const updateComment = async (commentId: string, data: IUpdateCommentPayload, authorId: string) => {
+    const commentData = await prisma.comment.findUniqueOrThrow({
+        where: {
+            id: commentId,
+            authorId
+        },
+        select: {
+            id: true
+        }
+    })
+
+    // if (!commentData) {
+    //     throw new Error("Your provided input is invalid!")
+    // }
+
+    const comment =await prisma.comment.update({
+        where: {
+            id: commentId,
+            authorId
+        },
+        data
+    })
+
+    return comment
+}
 
 const deleteComment = async (commentId: string, authorId: string) => {
-  const commentData = await prisma.comment.findUniqueOrThrow({
-    where: {
-      id: commentId,
-      authorId,
-    },
-    select: {
-      id: true,
-    },
-  });
+    const commentData = await prisma.comment.findUniqueOrThrow({
+        where: {
+            id: commentId,
+            authorId
+        },
+        select: {
+            id: true
+        }
+    })
 
-  const comment = await prisma.comment.delete({
-    where: {
-      id: commentData.id,
-    },
-  });
+    // if (!commentData) {
+    //     throw new Error("Your provided input is invalid!")
+    // }
 
-  return comment;
-};
+    const comment = await prisma.comment.delete({
+        where: {
+            id: commentData.id
+        }
+    });
+
+    return comment;
+}
 
 const moderateComment = async (id: string, data: IModerateCommentPayload) => {
     const commentData = await prisma.comment.findUniqueOrThrow({
@@ -122,10 +125,10 @@ const moderateComment = async (id: string, data: IModerateCommentPayload) => {
 }
 
 export const commentService = {
-  createComment,
-  getCommentByAuthorId,
-  getCommentByPostId,
-  updateComment,
-  deleteComment,
-  moderateComment,
-};
+    createComment,
+    getCommentByAuthorId,
+    getCommentByCommentId,
+    updateComment,
+    deleteComment,
+    moderateComment
+}
